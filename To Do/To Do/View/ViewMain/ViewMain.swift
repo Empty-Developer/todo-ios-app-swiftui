@@ -7,43 +7,60 @@ struct ViewMain: View {
             HStack {
                 Text("To do app")
                     .urbanistFont(fontType: .semiBold, size: 17)
+                    .foregroundStyle(.appBlack)
                 
                 Spacer()
                 
-                Text("Add item")
-                    .urbanistFont(fontType: .semiBold, size: 14)
-                Image(.iconPlus)
-                    .resizable()
-                    .frame(width: 16, height: 16)
+                Button {
+                    // code
+                } label: {
+                    Text("Add item")
+                        .urbanistFont(fontType: .semiBold, size: 14)
+                        .foregroundStyle(.appBlack)
+                    Image(.iconPlus)
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                }
+                
+                
             }
-            .backgroundStyle(.appLighWhite)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity, maxHeight: 89)
+            .padding(.top, 51)
+            .background(Color.appLighWhite)
+            
+
             Spacer()
             
             // MARK: Center Content
-            Image(.mainImg)
-            Text("No to do item here. \n Create one!")
-                .urbanistFont(fontType: .semiBold, size: 15)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.appGray)
-            
-            Button{
-                // code
-            } label: {
-                Text("Add a to do")
-                    .urbanistFont(fontType: .semiBold, size: 14)
-                    .foregroundStyle(.white)
+            VStack {
+                Image(.mainImg)
+                Text("No to do item here.\nCreate one!")
+                    .urbanistFont(fontType: .semiBold, size: 15)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.appGray)
+                    .frame(width: 141, height: 48)
+                
+                Button{
+                    // code
+                } label: {
+                    Text("Add a to do")
+                        .urbanistFont(fontType: .semiBold, size: 14)
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 220, height: 48)
+                .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
+                )
+                .padding(.top, 40)
             }
-            .frame(width: 220, height: 48)
-            .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
-            )
-            .padding(40)
             
             Spacer()
                 
         }
-        .backgroundStyle(.appWhite)
-        .padding()
+        .ignoresSafeArea(edges: .top)
+        .background(Color.appWhite)
     }
+    
 }
 
 #Preview {
