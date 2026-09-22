@@ -20,3 +20,9 @@ extension TextField {
         self.modifier(FontModifier(fontType: fontType, size: size))
     }
 }
+
+extension Toggle {
+    func urbanistFont(fontType: UrbanistModel = .medium, size: CGFloat = 14) -> some View {
+        self.modifier(FontModifier(fontType: fontType, size: size))
+    }
+}

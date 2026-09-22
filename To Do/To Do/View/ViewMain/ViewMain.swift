@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ViewMain: View {
     @State var isNextSuccess = false
+    @State var doesClose = false
+    @State var titleTextItem = "Item..."
     
     // TODO:
     // 1) create component item
@@ -37,33 +39,58 @@ struct ViewMain: View {
                 .padding(.top, 51)
                 .background(Color.appLighWhite)
                 
+                
+                // MARK: Item Component And Search Component
+                VStack {
+                    HStack {
+                        Toggle("\(titleTextItem)", isOn: $doesClose)
+                            .urbanistFont(fontType: .semiBold, size: 18)
+                            .toggleStyle(CheckboxToggleStyle())
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                    .padding(.bottom, 1)
+
+                    // MARK: Data Type
+                    HStack {
+                        Text("data...")
+                            .urbanistFont(fontType: .bold, size: 13)
+                            .foregroundStyle(.appGray)
+                            .padding(.bottom, 16)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 60)
+                }
+                .border(width: 1, edges: [.bottom], color: .appWhiteBlue)
 
                 Spacer()
                 
                 // MARK: Center Content
-                VStack {
-                    Image(.mainImg)
-                    Text("No to do item here.\nCreate one!")
-                        .urbanistFont(fontType: .semiBold, size: 15)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.appGray)
-                        .frame(width: 141, height: 48)
-                    
-                    NavigationLink {
-                        ViewAddedItem()
-                    } label: {
-                        Text("Add a to do")
-                            .urbanistFont(fontType: .semiBold, size: 14)
-                            .foregroundStyle(.white)
-                    }
-                    .frame(width: 220, height: 48)
-                    .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
-                    )
-                    .padding(.top, 40)
-                }
-                
-                Spacer()
-                    
+//                VStack {
+//                    Image(.mainImg)
+//                    Text("No to do item here.\nCreate one!")
+//                        .urbanistFont(fontType: .semiBold, size: 15)
+//                        .multilineTextAlignment(.center)
+//                        .foregroundStyle(.appGray)
+//                        .frame(width: 141, height: 48)
+//                    
+//                    NavigationLink {
+//                        ViewAddedItem()
+//                    } label: {
+//                        Text("Add a to do")
+//                            .urbanistFont(fontType: .semiBold, size: 14)
+//                            .foregroundStyle(.white)
+//                    }
+//                    .frame(width: 220, height: 48)
+//                    .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
+//                    )
+//                    .padding(.top, 40)
+//                }
+//                
+//                Spacer()
+//                    
             }
             .ignoresSafeArea(edges: .top)
             .background(Color.appWhite)
