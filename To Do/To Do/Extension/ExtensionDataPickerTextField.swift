@@ -12,7 +12,9 @@ struct DataPickerTextField: View {
     
     private static let dataFormatter: DateFormatter = {
         let dataFormatter = DateFormatter()
-        dataFormatter.dateFormat = "yyyy/MM/dd"
+
+        // check data format in backend
+        dataFormatter.dateStyle = .short
         return dataFormatter
     }()
     

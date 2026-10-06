@@ -4,6 +4,7 @@ struct ViewMain: View {
     @State var isNextSuccess = false
     @State var doesClose = false
     @State var titleTextItem = "Item..."
+    @State var selectSearch = ""
     
     // TODO:
     // 1) create component item
@@ -40,6 +41,31 @@ struct ViewMain: View {
                 .background(Color.appLighWhite)
                 
                 
+                // MARK: Search Component
+                VStack {
+                    HStack {
+                        Image(.search)
+                            .resizable()
+                            .frame(width: 23, height: 23)
+                        TextField("Search here", text: $selectSearch)
+                            .urbanistFont(fontType: .medium, size: 13)
+//                            .foregroundStyle(Color.appGray)
+                        Spacer()
+                        
+                        Button {
+                            
+                        } label: {
+                            Text("Sort by date")
+                                .urbanistFont(fontType: .medium, size: 13)
+                                .foregroundStyle(Color.appGray)
+                        }
+                        .padding(.vertical, 24)
+                    }
+                    .padding(.horizontal, 24)
+                    
+                }
+                .border(width: 1, edges: [.bottom], color: .appWhiteBlue)
+                
                 // MARK: Item Component And Search Component
                 VStack {
                     HStack {
@@ -48,6 +74,16 @@ struct ViewMain: View {
                             .toggleStyle(CheckboxToggleStyle())
                         
                         Spacer()
+                        
+                        Button{
+                            // code
+                        } label: {
+                            Image(.more2Line)
+                                .resizable()
+                                .frame(width: 18, height: 18)
+                        }
+                        
+                        
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
@@ -64,7 +100,7 @@ struct ViewMain: View {
                     .padding(.horizontal, 60)
                 }
                 .border(width: 1, edges: [.bottom], color: .appWhiteBlue)
-
+//
                 Spacer()
                 
                 // MARK: Center Content
