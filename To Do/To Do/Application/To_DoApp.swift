@@ -1,17 +1,13 @@
-//
-//  To_DoApp.swift
-//  To Do
-//
-//  Created by Valera on 20.09.2026.
-//
-
 import SwiftUI
 
 @main
 struct To_DoApp: App {
+    
+    @State var viewModel = ViewModelAuth()
+    
     var body: some Scene {
         WindowGroup {
-            ViewAuth()
+            ViewMain(viewModel: viewModel)
         }
     }
 }

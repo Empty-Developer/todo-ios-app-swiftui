@@ -3,62 +3,13 @@ import Combine
 
 struct ViewAuth: View {
 
-    @State private var email: String = ""
-    @State private var password: String = ""
-    
-    @State private var openEye: UIImage = .eye
-    @State private var closeEye: UIImage = .eyeInvisible
-    @State private var isOpen: Bool = true
-    
-    @State private var previousCount: Int = 0
-
-    @State private var isSignOn: Bool = true
-    
-    private var isButtonDisabled: Bool {
-        email.isEmpty || password.isEmpty
-    }
-    
-    private var isEyeCheck: UIImage {
-        if isOpen == true {
-            return openEye
-        } else {
-            return closeEye
-        }
-    }
-    
-    private var pointClosePassword: Binding<String>{
-        Binding<String>(
-            get: {
-                if isOpen {
-                    return password
-                } else {
-                    return String(repeating: "·", count: password.count)
-                }
-            },
-            set: { newValue in
-                if isOpen {
-                    password = newValue
-                } else {
-                    if newValue.count < previousCount {
-                        if !password.isEmpty {
-                            password.removeLast()
-                        }
-                    } else if newValue.count > previousCount {
-                        if let lastChar = newValue.last {
-                            password.append(lastChar)
-                        }
-                    }
-                }
-                previousCount = password.count
-            }
-        )
-    }
+    @Bindable var viewModel: ViewModelAuth
     
     var body: some View {
         VStack {
             // MARK: Email Input
             VStack {
-                Text(isSignOn ? "Log In" : "Sign Up")
+                Text(viewModel.isSignOn ? "Log In" : "Sign Up")
                     .urbanistFont(fontType: .bold, size: 26)
                     .foregroundStyle(.appBlack)
                 VStack {
@@ -75,7 +26,7 @@ struct ViewAuth: View {
                             .resizable()
                             .frame(width: 24, height: 24)
                         
-                        TextField("email...", text: $email)
+                        TextField("email...", text: $viewModel.user.email)
                     }
                 }
                 .castomStyle()
@@ -95,13 +46,13 @@ struct ViewAuth: View {
                             .resizable()
                             .frame(width: 24, height: 24)
                         
-                        TextField("password...", text: pointClosePassword)
+                        TextField("password...", text: viewModel.pointClosePassword)
                             
                         
                         Button{
-                            isOpen.toggle()
+                            viewModel.isOpen.toggle()
                         } label: {
-                            Image(uiImage: isEyeCheck)
+                            Image(uiImage: viewModel.isEyeCheck)
                                 .resizable()
                                 .frame(width: 20, height: 20)
                         }
@@ -114,9 +65,9 @@ struct ViewAuth: View {
             
             HStack {
                 Button {
-                    isSignOn.toggle()
+                    viewModel.isSignOn.toggle()
                 } label: {
-                    Text(isSignOn ? "Don’t have an account? Sign Up" : "Already have an account? Log In")
+                    Text(viewModel.isSignOn ? "Don’t have an account? Sign Up" : "Already have an account? Log In")
                         .urbanistFont(fontType: .semiBold, size: 13)
                         .foregroundStyle(.appBlack)
                 }
@@ -128,18 +79,21 @@ struct ViewAuth: View {
             
             VStack {
                 
-                Button{
-                    
-                } label: {
-                    Text(isSignOn ? "Log In" : "Sign Up")
-                        .urbanistFont(fontType: .semiBold, size: 14)
-                        .foregroundStyle(.white)
+                if viewModel.isLoading {
+                    ProgressView("Loading...")
                 }
-                .frame(maxWidth: .infinity, maxHeight: 48)
-                .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
-                )
-                .padding(.horizontal, 24)
-                .disabled(isButtonDisabled)
+
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+                ButtonView(isDisabled: viewModel.isButtonDisabled, isSign: viewModel.isSignOn) {
+                    viewModel.logIn()
+                    
+                    
+                }
+                
             }
         }
         .preferredColorScheme(.light)
@@ -149,7 +103,7 @@ struct ViewAuth: View {
 }
 
 #Preview {
-    ViewAuth()
+    ViewAuth(viewModel: ViewModelAuth())
 }
 
 
@@ -165,5 +119,26 @@ struct VStackViewModifier: ViewModifier {
 extension View {
     func castomStyle() -> some View {
         modifier(VStackViewModifier())
+    }
+}
+
+struct ButtonView: View {
+    let isDisabled: Bool
+    let isSign: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button{
+            action()
+        } label: {
+            Text(isSign ? "Log In" : "Sign Up")
+                .urbanistFont(fontType: .semiBold, size: 14)
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 48)
+        .background(isDisabled ? .appWhiteGray : .appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
+        )
+        .padding(.horizontal, 24)
+        .disabled(isDisabled)
     }
 }

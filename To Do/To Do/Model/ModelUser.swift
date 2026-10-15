@@ -1,6 +1,6 @@
 import Foundation
 
 struct ModelUser: Codable {
-    let email: String
-    let password: String
+    var email: String
+    var password: String
 }
