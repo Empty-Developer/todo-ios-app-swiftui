@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 import Observation
 
 @MainActor
@@ -15,53 +14,49 @@ final class ViewModelAuth {
     var openEye: UIImage = .eye
     var closeEye: UIImage = .eyeInvisible
     var isOpen: Bool = true
-    
     var previousCount: Int = 0
 
-    var isSignOn: Bool = true
+    var isSignOn: Bool = true // true = login, false = registration
     
     private let authService = AuthService()
-    private var cancellables = Set<AnyCancellable>()
     
     var isButtonDisabled: Bool {
         user.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || user.password.isEmpty || isLoading
     }
     
-    func logIn() {
+    func submit() {
+        Task {
+            await authenticate()
+        }
+    }
+    
+    func authenticate() async {
         guard !isButtonDisabled else {
             return
         }
-
+        
         errorMessage = nil
         isLoading = true
-
-        authService.login(user: user)
-            .receive(on: DispatchQueue.main)
-            .sink(
-                receiveCompletion: { [weak self] completion in
-                    guard let self else { return }
-
-                    if case .failure(let error) = completion {
-                        self.errorMessage = error.localizedDescription
-                    }
-
-                    self.isLoading = false
-                },
-                receiveValue: { [weak self] response in
-                    guard let self else { return }
-
-                    // check response
-                    print("Login successful")
-                    print("Token type:", response.token_type)
-
-                    withAnimation {
-                        self.authenticated = true
-                    }
-                }
-            )
-            .store(in: &cancellables)
+        defer {
+            isLoading = false
+        }
+        
+        do {
+            if isSignOn {
+                // login
+                let response = try await authService.login(user: user)
+                print("Login successful, token type:", response.token_type)
+            } else {
+                // registration
+                let created = try await authService.register(user: user)
+                print("Registered user id:", created.id, "email:", created.email)
+            }
+            withAnimation { authenticated = true }
+        } catch {
+            print("AUTH ERROR:", error)
+            errorMessage = error.localizedDescription
+        }
     }
-
     
     var isEyeCheck: UIImage {
         if isOpen == true {

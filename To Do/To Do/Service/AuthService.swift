@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 
 // MARK: Check Error from backend
@@ -23,42 +22,48 @@ enum AuthError: LocalizedError {
 final class AuthService {
     private let baseUrl = URL(string: "http://127.0.0.1:8000")!
     
-    func login(user: ModelUser) -> AnyPublisher<ModelLoginResponse, Error> {
+    // MARK: all check response
+    private static func validate(_ response: URLResponse, _ data: Data) throws {
+        guard let http = response as? HTTPURLResponse else { throw AuthError.invalideResponse }
+        guard (200...299).contains(http.statusCode) else { throw AuthError.serverError(http.statusCode) }
+        guard !data.isEmpty else { throw AuthError.emptyResponse }
+    }
+    
+    func login(user: ModelUser) async throws -> ModelLoginResponse {
         
         // MARK this moment where I can select respons in server
         let url = baseUrl.appending(path: "login")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-
+        
         var components = URLComponents()
+        
         components.queryItems = [
             URLQueryItem(name: "username", value: user.email),
             URLQueryItem(name: "password", value: user.password)
         ]
         request.httpBody = components.percentEncodedQuery?.data(using: .utf8)
         
-        return URLSession.shared
-            .dataTaskPublisher(for: request)
-            .tryMap { output -> Data in
-                guard let response = output.response as? HTTPURLResponse else {
-                    throw AuthError.invalideResponse
-                }
-                
-                guard (200...299).contains(response.statusCode) else {
-                    throw AuthError.serverError(response.statusCode)
-                }
-                
-                guard !output.data.isEmpty else {
-                    throw AuthError.emptyResponse
-                }
-                
-                return output.data
-            }
-            .decode(type: ModelLoginResponse.self,decoder: JSONDecoder())
-            .eraseToAnyPublisher()
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.validate(response, data)
+        return try JSONDecoder().decode(ModelLoginResponse.self, from: data)
+    }
+    
+    func register(user: ModelUser) async throws -> ModelRegisterResponse {
+        let url = baseUrl.appending(path: "users")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        request.httpBody = try JSONEncoder().encode(user)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.validate(response, data)
+        return try JSONDecoder().decode(ModelRegisterResponse.self, from: data)
     }
 }

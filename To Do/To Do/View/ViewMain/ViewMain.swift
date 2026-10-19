@@ -8,10 +8,6 @@ struct ViewMain: View {
     
     @Bindable var viewModel: ViewModelAuth
     
-    // TODO:
-    // 1) create component item
-    // 2) create function for delete main component for item
-    // 3) create Stak forEch for items
     
     var body: some View {
         if !viewModel.authenticated {

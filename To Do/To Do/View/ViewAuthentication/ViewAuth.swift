@@ -89,7 +89,7 @@ struct ViewAuth: View {
                         .font(.caption)
                 }
                 ButtonView(isDisabled: viewModel.isButtonDisabled, isSign: viewModel.isSignOn) {
-                    viewModel.logIn()
+                    viewModel.submit() 
                     
                     
                 }
