@@ -1,138 +1,120 @@
 import SwiftUI
 
 struct ViewMain: View {
-    @State private var isNextSuccess = false
-    @State private var doesClose = false
-    @State private var titleTextItem = "Item..."
-    @State private var selectSearch = ""
-    
     @Bindable var viewModel: ViewModelAuth
-    
-    
+    @State private var todoVM = ViewModelTodo()
+    @State private var itemToEdit: ModelTodoResponse?
+
     var body: some View {
         if !viewModel.authenticated {
             ViewAuth(viewModel: viewModel)
         } else {
-            NavigationStack{
-                VStack {
-                    // MARK: Header bar
-                    HStack {
-                        Text("To do app")
-                            .urbanistFont(fontType: .semiBold, size: 17)
-                            .foregroundStyle(.appBlack)
-                        
-                        Spacer()
-                        
-                        NavigationLink {
-                            ViewAddedItem()
-                        } label: {
-                            Text("Add item")
-                                .urbanistFont(fontType: .semiBold, size: 14)
-                                .foregroundStyle(.appBlack)
-                            Image(.iconPlus)
-                                .resizable()
-                                .frame(width: 16, height: 16)
-                        }
-                        
-                        
+            NavigationStack {
+                ZStack(alignment: .bottom) {
+                    VStack(spacing: 0) {
+                        HeaderBarView(todoVM: todoVM, onLogout: { viewModel.logout() })
+                        content
+                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 24)
-                    .frame(maxWidth: .infinity, maxHeight: 89)
-                    .padding(.top, 51)
-                    .background(Color.appLighWhite)
-                    
-                    
-                    // MARK: Search Component
-                    VStack {
-                        HStack {
-                            Image(.search)
-                                .resizable()
-                                .frame(width: 23, height: 23)
-                            TextField("Search here", text: $selectSearch)
-                                .urbanistFont(fontType: .medium, size: 13)
-    //                            .foregroundStyle(Color.appGray)
-                            Spacer()
-                            
-                            Button {
-                                
-                            } label: {
-                                Text("Sort by date")
-                                    .urbanistFont(fontType: .medium, size: 13)
-                                    .foregroundStyle(Color.appGray)
-                            }
-                            .padding(.vertical, 24)
-                        }
-                        .padding(.horizontal, 24)
-                        
-                    }
-                    .border(width: 1, edges: [.bottom], color: .appWhiteBlue)
-                    
-                    // MARK: Item Component And Search Component
-                    VStack {
-                        HStack {
-                            Toggle("\(titleTextItem)", isOn: $doesClose)
-                                .urbanistFont(fontType: .semiBold, size: 18)
-                                .toggleStyle(CheckboxToggleStyle())
-                            
-                            Spacer()
-                            
-                            Button{
-                                // code
-                            } label: {
-                                Image(.more2Line)
-                                    .resizable()
-                                    .frame(width: 18, height: 18)
-                            }
-                            
-                            
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 16)
-                        .padding(.bottom, 1)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .ignoresSafeArea(edges: .top)
+                    .background(Color.appWhite)
 
-                        // MARK: Data Type
-                        HStack {
-                            Text("data...")
-                                .urbanistFont(fontType: .bold, size: 13)
-                                .foregroundStyle(.appGray)
-                                .padding(.bottom, 16)
-                            Spacer()
+                    if let editing = todoVM.editingTodo {
+                        Color.black.opacity(0.35)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                            .onTapGesture { todoVM.closeMenu() }
+                        VStack(spacing: 0) {
+                            Spacer(minLength: 0)
+                            EditView(
+                                todo: editing,
+                                isDeleting: todoVM.isDeleting,
+                                onEdit: {
+                                    todoVM.closeMenu()
+                                    itemToEdit = editing
+                                },
+                                onDelete: {
+                                    Task { await todoVM.delete(editing) }
+                                }
+                            )
                         }
-                        .padding(.horizontal, 60)
+                        .ignoresSafeArea(edges: .bottom)
+                        .transition(.move(edge: .bottom))
                     }
-                    .border(width: 1, edges: [.bottom], color: .appWhiteBlue)
-    //
-                    Spacer()
-                    
-                    // MARK: Center Content
-    //                VStack {
-    //                    Image(.mainImg)
-    //                    Text("No to do item here.\nCreate one!")
-    //                        .urbanistFont(fontType: .semiBold, size: 15)
-    //                        .multilineTextAlignment(.center)
-    //                        .foregroundStyle(.appGray)
-    //                        .frame(width: 141, height: 48)
-    //
-    //                    NavigationLink {
-    //                        ViewAddedItem()
-    //                    } label: {
-    //                        Text("Add a to do")
-    //                            .urbanistFont(fontType: .semiBold, size: 14)
-    //                            .foregroundStyle(.white)
-    //                    }
-    //                    .frame(width: 220, height: 48)
-    //                    .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
-    //                    )
-    //                    .padding(.top, 40)
-    //                }
-    //
-    //                Spacer()
-    //
                 }
-                .ignoresSafeArea(edges: .top)
-                .background(Color.appWhite)
+                .animation(.easeInOut(duration: 0.2), value: todoVM.editingTodo)
+                .navigationDestination(item: $itemToEdit) { todo in
+                    ViewAddedItem(todoVM: todoVM, editing: todo)
+                }
             }
             .preferredColorScheme(.light)
+            .task {
+                await todoVM.loadTodos(token: viewModel.accessToken)
+                if todoVM.isUnauthorized { viewModel.handleUnauthorized() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if todoVM.isLoadingTodos {
+            Spacer()
+            ProgressView("Loading...")
+            Spacer()
+
+        } else if todoVM.isEmpty {
+            Spacer()
+            EmptyStateView(todoVM: todoVM)
+            Spacer()
+
+        } else {
+            SearchBarView(
+                searchText: $todoVM.searchText,
+                sortAscending: todoVM.sortAscending,
+                onSort: { todoVM.toggleSort() }
+            )
+
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(todoVM.activeTodos) { todo in
+                        TodoRowView(
+                            todo: todo,
+                            isOn: Binding(
+                                get: { todoVM.isChecked(todo) },
+                                set: { todoVM.setChecked(todo, to: $0) }
+                            ),
+                            onMore: { todoVM.openMenu(todo) }
+                        )
+                        .id("active-\(todo.id)")
+                    }
+
+                    if !todoVM.completedTodos.isEmpty {
+                        CompletedHeaderView()
+
+                        ForEach(todoVM.completedTodos) { todo in
+                            TodoRowView(
+                                todo: todo,
+                                isOn: Binding(
+                                    get: { todoVM.isChecked(todo) },
+                                    set: { todoVM.setChecked(todo, to: $0) }
+                                ),
+                                onMore: { todoVM.openMenu(todo) }
+                            )
+                            .id("done-\(todo.id)")
+                        }
+                    }
+                }
+                .padding(.bottom, 24)
+            }
+        }
+
+        if let error = todoVM.errorMessage {
+            Text(error)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
         }
     }
 }

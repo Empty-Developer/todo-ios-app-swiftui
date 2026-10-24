@@ -1,14 +1,23 @@
 import SwiftUI
 
 struct ViewAddedItem: View {
-    // TODO:
-    // 1) create save protocol for "Add" button
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
+    var todoVM: ViewModelTodo
+    var editing: ModelTodoResponse? = nil
+
     @State private var selectTitle: String = ""
     @State private var selectDataInput: Date?
-    
+
+    private var isEditMode: Bool { editing != nil }
+
+    private var isButtonDisabled: Bool {
+        selectTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        || selectDataInput == nil
+        || todoVM.isSaving
+    }
+
     var body: some View {
         VStack {
             // MARK: Header bar
@@ -20,24 +29,23 @@ struct ViewAddedItem: View {
                         .resizable()
                         .frame(width: 24, height: 24)
                 }
-                Text("Add a new item")
+                Text(isEditMode ? "Edit item" : "Add a new item")
                     .urbanistFont(fontType: .semiBold, size: 17)
                     .foregroundStyle(.appBlack)
-                
+
                 Spacer()
-                
             }
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, maxHeight: 89)
             .padding(.top, 51)
             .background(Color.appLighWhite)
-            
+
             VStack {
                 HStack {
                     Text("Title")
                     Spacer()
                 }
-                
+
                 HStack {
                     TextField("Do something great", text: $selectTitle)
                         .urbanistFont(fontType: .regular, size: 16)
@@ -51,15 +59,14 @@ struct ViewAddedItem: View {
                         .stroke(Color.appWhiteBlue, lineWidth: 1)
                 )
                 .padding(.bottom, 24)
-                
+
                 HStack {
                     Text("Due date")
                     Spacer()
                 }
-                
+
                 HStack {
                     DataPickerTextField(placeholder: "Select Data", date: self.$selectDataInput)
-                    
                 }
                 .padding(.leading, 20)
                 .frame(maxWidth: .infinity, maxHeight: 56)
@@ -71,34 +78,59 @@ struct ViewAddedItem: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 24)
-            
+
             Spacer()
-            
+
+            if let error = todoVM.errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+                    .padding(.bottom, 8)
+            }
+
             // MARK: Button
             VStack {
-                
-                Button{
-                    // code
+                Button {
+                    Task {
+                        guard let date = selectDataInput else { return }
+                        let success: Bool
+                        if let editing {
+                            success = await todoVM.updateTodo(editing, title: selectTitle, date: date)
+                        } else {
+                            success = await todoVM.addTodo(title: selectTitle, date: date)
+                        }
+                        if success { dismiss() }
+                    }
                 } label: {
-                    Text("Add")
-                        .urbanistFont(fontType: .semiBold, size: 14)
-                        .foregroundStyle(.white)
+                    if todoVM.isSaving {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text(isEditMode ? "Save" : "Add")
+                            .urbanistFont(fontType: .semiBold, size: 14)
+                            .foregroundStyle(.white)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: 48)
-                .background(Color.appBlack, in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous)
-                )
+                .background(isButtonDisabled ? Color.appWhiteGray : Color.appBlack,
+                            in: RoundedRectangle(cornerSize: CGSize(width: 4, height: 4), style: .continuous))
                 .padding(.horizontal, 24)
+                .disabled(isButtonDisabled)
             }
             .padding(.bottom, 35)
-                
         }
         .ignoresSafeArea(edges: .top)
         .background(Color.appWhite)
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.light)
+        .onAppear {
+            guard let editing else { return }
+            selectTitle = editing.title
+            selectDataInput = ModelTodoResponse.isoFormatter.date(from: editing.date)
+        }
     }
 }
 
 #Preview {
-    ViewAddedItem()
+    ViewAddedItem(todoVM: ViewModelTodo())
 }
