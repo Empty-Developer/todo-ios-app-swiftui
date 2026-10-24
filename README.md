@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/hero.png" alt="To Do: main screen" width="320">
+  <img src="docs/hero.png" alt="To Do: main screen" width="900">
 </p>
 
 <h1 align="center">To Do</h1>
